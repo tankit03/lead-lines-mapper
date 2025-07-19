@@ -94,6 +94,16 @@ router.post('/login', (req, res) => {
     });
 });
 
+// profile page
+router.get('/profile', isAuthenticated, (req, res) => {
+
+    res.render('profile', {
+        title: 'Dashboard',
+        username: req.session.username
+    });
+
+});
+
 // logout route
 // POST /logout - Handle logout logic
 router.post('/logout', (req, res) => {
