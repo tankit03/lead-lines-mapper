@@ -44,6 +44,12 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use((req, res, next) => {
+    res.locals.session = req.session;
+    res.locals.googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY; // Pass API key to views
+    next();
+});
+
 
 // A public home page route
 app.get('/', (req, res) => {
