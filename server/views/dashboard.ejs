@@ -1,26 +1,27 @@
 <%- include('partials/header') %>
-<!-- Main container for the full-screen map -->
+
+
 <div class="relative h-[calc(100vh-4rem)] w-full"> 
+
+    <input
+      id="pac-input"
+      class="controls"
+      type="text"
+      placeholder="Search Box"
+    />
     
     <!-- The map itself, positioned to fill the container -->
     <div id="map" class="absolute inset-0"></div>
-         <!-- The welcome message, overlaid on top of the map -->
-        <div class="absolute top-4 left-4 z-10 max-w-sm">
-            <div class="bg-white p-4 rounded-lg shadow-lg">
-                <h1 class="text-xl font-bold text-gray-800">Map Dashboard</h1>
-                <h2 class="text-md text-gray-600 mt-1">Welcome, <span class="font-semibold text-indigo-600"><%= username %></span>!</h2>
-                <p class="text-xs text-gray-500 mt-2">Click anywhere on the map to add a waypoint.</p>
-            </div>
-        </div>
-        <script>(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
-            ({key: "<%= googleMapsApiKey %>", v: "weekly"});
+        
+        <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap&libraries=marker,places">
         </script>
     </div>
 </div>
 
 <script>
     // Initialize and add the map
-    let map, infoWindow;
+    let map, infoWindow, poly;
 
     async function initMap() {
         // Request needed libraries.
@@ -61,8 +62,101 @@
             mapId: "DEMO_MAP_ID",
         });
 
-        map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
+        // Create the polyline after the map is created
+        poly = new google.maps.Polyline({
+            strokeColor: "#000000",
+            strokeOpacity: 1.0,
+            strokeWeight: 3,
+        });
+        poly.setMap(map);
+        
+        // Add a listener for the click event (correct syntax)
+        map.addListener("click", addLatLng);
 
+        // Initialize the search functionality
+        initializeSearch();
+    }
+
+    function addLatLng(event) {
+        const path = poly.getPath();
+
+        // Because path is an MVCArray, we can simply append a new coordinate
+        // and it will automatically appear.
+        path.push(event.latLng);
+        // Add a new marker at the new plotted point on the polyline.
+        new google.maps.Marker({
+            position: event.latLng,
+            title: "#" + path.getLength(),
+            map: map,
+        });
+    }
+
+    function initializeSearch() {
+        // Create the search box and link it to the UI element.
+        const input = document.getElementById("pac-input");
+        const searchBox = new google.maps.places.SearchBox(input);
+
+        // Position the search box on the map
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+        
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener("bounds_changed", () => {
+            searchBox.setBounds(map.getBounds());
+        });
+
+        let markers = [];
+
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        searchBox.addListener("places_changed", () => {
+            const places = searchBox.getPlaces();
+
+            if (places.length == 0) {
+                return;
+            }
+
+            // Clear out the old markers.
+            markers.forEach((marker) => {
+                marker.setMap(null);
+            });
+            markers = [];
+
+            // For each place, get the icon, name and location.
+            const bounds = new google.maps.LatLngBounds();
+
+            places.forEach((place) => {
+                if (!place.geometry || !place.geometry.location) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+
+                const icon = {
+                    url: place.icon,
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(25, 25),
+                };
+
+                // Create a marker for each place.
+                markers.push(
+                    new google.maps.Marker({
+                        map,
+                        icon,
+                        title: place.name,
+                        position: place.geometry.location,
+                    }),
+                );
+                
+                if (place.geometry.viewport) {
+                    // Only geocodes have viewport.
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+            });
+            map.fitBounds(bounds);
+        });
     }
 
     function handleLocationError(browserHasGeolocation, infoWindow, pos) {
@@ -74,9 +168,6 @@
         );
         infoWindow.open(map);
     }
-
-    // Initialize the map when the page loads
-    initMap();
 </script>
 
 <%- include('partials/footer') %>
