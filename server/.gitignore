@@ -1,4 +1,13 @@
 node_modules/
 .env
-npm-debug.log
-*.sqlite3
+
+# database ignored
+/database/
+
+# npm logs
+npm-debug.log*
+
+# mac stuff
+.DS_Store
+Thumbs.db
+._*
