@@ -5,6 +5,7 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth'); // Import auth routes
+const dashboardRoutes = require('./routes/dashboard');
 
 
 dotenv.config();
@@ -58,6 +59,7 @@ app.get('/', (req, res) => {
 
 // Use the authentication routes defined in routes/auth.js
 app.use('/', authRoutes);
+app.use('/', dashboardRoutes);
 
 // 7. Start the Server
 app.listen(PORT, () => {

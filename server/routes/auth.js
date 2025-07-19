@@ -94,18 +94,6 @@ router.post('/login', (req, res) => {
     });
 });
 
-
-// GET /dashboard - A page only accessible to logged-in users
-router.get('/dashboard', isAuthenticated, (req, res) => {
-    // The `isAuthenticated` middleware runs first. If the user is not logged in,
-    // they will be redirected and this handler will not be called.
-    res.render('dashboard', {
-        title: 'Dashboard',
-        username: req.session.username // Pass username to the template
-    });
-});
-
-
 // logout route
 // POST /logout - Handle logout logic
 router.post('/logout', (req, res) => {
