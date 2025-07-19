@@ -1,0 +1,23 @@
+<!-- views/partials/header.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | Auth App</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>
+        <% if (session && session.userId) { %>
+            <a href="/dashboard">Dashboard</a>
+            <form action="/logout" method="POST" style="display: inline;">
+                <button type="submit">Logout</button>
+            </form>
+        <% } else { %>
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        <% } %>
+    </nav>
+    <main>

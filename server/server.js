@@ -1,73 +1,59 @@
-import { DB } from './connect.js';
 
-import express from 'express';
-import bodyParser from 'body-parser';
-import bcrypt from 'bcrypt';
+const express = require('express');
+const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
+const path = require('path');
+const dotenv = require('dotenv');
+const authRoutes = require('./routes/auth'); // Import auth routes
+
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT;
 
-app.set('view-engine', 'ejs');
-app.use(express.urlencoded({extended: false}));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-app.use(bodyParser.json());
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-app.get("/", (req,res) => {
-    // res.status(200).json({success: true });
-    // res.send("ready to find lead lines");
-    res.render('index.ejs');
-});
-app.get("/login", (req,res) => {
-    // res.status(200).json({success: true });
-    // res.send("ready to find lead lines");
-    res.render('login.ejs');
-});
+// 5. Set up Session Management
+app.use(
+    session({
+        store: new SQLiteStore({
+            db: 'sessions.sqlite',
+            dir: './database', // Change this to the new folder
+            concurrentDB: true // Recommended for performance
+        }),
+        secret: process.env.SESSION_SECRET, // A secret key for signing the session ID cookie
+        resave: false, // Don't save session if unmodified
+        saveUninitialized: false, // Don't create session until something stored
+        cookie: {
+            maxAge: 1000 * 60 * 60 * 24, // 24 hours
+            httpOnly: true, // Prevents client-side JS from reading the cookie
+            secure: process.env.NODE_ENV === 'production' // Use secure cookies in production
+        }
+    })
+);
 
-app.post("/login", (req,res) => {
-
-});
-
-app.get("/signup", (req,res) => {
-    // res.status(200).json({success: true });
-    // res.send("ready to find lead lines");
-    res.render('signup.ejs');
-});
-
-app.post("/signup", async (req,res) => {
-
-    try {
-
-        const { username, email, password } = req.body;
-
-        console.log("username", req.body.username);
-        console.log("email", req.body.email);
-        console.log("password", req.body.password);
-
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
-
-        const params = [username, email, hashedPassword];
-
-        DB.run(sql, params, function(err) {
-            if(err) {
-                console.error("Database error: ", err.message);
-                return res.redirect('/signup');
-            }
-            console.log(`Success ! A new user has been created with the username: ${username}`);
-            res.redirect("/login");
-        });
-
-    } catch (error) {
-        console.log("Error during signup:", error);
-        res.redirect("/signup");
-    }
-
+// Middleware to make session data available to all templates
+app.use((req, res, next) => {
+    res.locals.session = req.session;
+    next();
 });
 
-app.listen(3000, (err) =>{
-    if(err){
-        console.log('ERROR: ', err.message);
-    }
-    console.log('LISTENING on port 3000');
-})
+
+// A public home page route
+app.get('/', (req, res) => {
+    res.render('index', { title: 'Home' });
+});
+
+// Use the authentication routes defined in routes/auth.js
+app.use('/', authRoutes);
+
+// 7. Start the Server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
