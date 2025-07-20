@@ -28,6 +28,34 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
                     console.log('Users table created successfully.');
                 }
             });
+            db.run(`CREATE TABLE IF NOT EXISTS waypoints (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                lat REAL NOT NULL,
+                lng REAL NOT NULL,
+                userId INTEGER NOT NULL,
+                username TEXT NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (userId) REFERENCES users (id)
+            )`, (err) => {
+                if (err) {
+                    console.error('Error creating waypoints table:', err.message);
+                }
+            });
+            
+            db.run(`CREATE TABLE IF NOT EXISTS paths (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                userId INTEGER NOT NULL,
+                username TEXT NOT NULL,
+                pathData TEXT NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (userId) REFERENCES users (id)
+            )`, (err) => {
+                if (err) {
+                    console.error('Error creating paths table:', err.message);
+                } else {
+                    console.log('Paths table created successfully.');
+                }
+            });
         });
     }
 });

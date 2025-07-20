@@ -1,173 +1,39 @@
 <%- include('partials/header') %>
 
-
 <div class="relative h-[calc(100vh-4rem)] w-full"> 
-
     <input
       id="pac-input"
-      class="controls"
+      class="absolute top-4 left-4 z-20 w-80 px-4 py-2 rounded-md shadow-lg border-none focus:ring-2 focus:ring-indigo-500"
       type="text"
-      placeholder="Search Box"
+      placeholder="Search for a location"
     />
-    
-    <!-- The map itself, positioned to fill the container -->
-    <div id="map" class="absolute inset-0"></div>
-        
-        <script async defer
-            src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap&libraries=marker,places">
-        </script>
+    <div id="map-controls" class="map-controls">
+        <button id="add-marker-btn" class="map-control-btn">Add Marker</button>
+        <button id="draw-path-btn" class="map-control-btn">Draw Path</button>
+        <button id="clear-map-btn" class="map-control-btn">Clear</button>
     </div>
+    <div id="map" class="absolute inset-0"></div>
 </div>
 
+<!-- Configuration script to pass server-side data to client-side -->
 <script>
-    // Initialize and add the map
-    let map, infoWindow, poly;
+    window.dashboardConfig = {
+        userId: "<%= session.userId %>",
+        username: "<%= session.username %>",
+        googleMapsApiKey: "<%= googleMapsApiKey %>"
+    };
+</script>
+<script src="/js/dashboard.js"></script>
 
-    async function initMap() {
-        // Request needed libraries.
-        const { Map } = await google.maps.importLibrary("maps");
-        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-
-        // Default position (fallback if geolocation fails)
-        let position = { lat: -34.397, lng: 150.644 };
-        let zoom = 6;
-
-        // Try to get user's current location immediately
-        if (navigator.geolocation) {
-            try {
-                const userPosition = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 60000
-                    });
-                });
-                
-                position = {
-                    lat: userPosition.coords.latitude,
-                    lng: userPosition.coords.longitude
-                };
-                zoom = 15; // Closer zoom for user's location
-                
-            } catch (error) {
-                console.warn('Could not get user location:', error.message);
-                // Keep default position and zoom
-            }
-        }
-
-        // Create the map
-        map = new Map(document.getElementById("map"), {
-            center: position,
-            zoom: zoom,
-            mapId: "DEMO_MAP_ID",
-        });
-
-        // Create the polyline after the map is created
-        poly = new google.maps.Polyline({
-            strokeColor: "#000000",
-            strokeOpacity: 1.0,
-            strokeWeight: 3,
-        });
-        poly.setMap(map);
-        
-        // Add a listener for the click event (correct syntax)
-        map.addListener("click", addLatLng);
-
-        // Initialize the search functionality
-        initializeSearch();
-    }
-
-    function addLatLng(event) {
-        const path = poly.getPath();
-
-        // Because path is an MVCArray, we can simply append a new coordinate
-        // and it will automatically appear.
-        path.push(event.latLng);
-        // Add a new marker at the new plotted point on the polyline.
-        new google.maps.Marker({
-            position: event.latLng,
-            title: "#" + path.getLength(),
-            map: map,
-        });
-    }
-
-    function initializeSearch() {
-        // Create the search box and link it to the UI element.
-        const input = document.getElementById("pac-input");
-        const searchBox = new google.maps.places.SearchBox(input);
-
-        // Position the search box on the map
-        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-        
-        // Bias the SearchBox results towards current map's viewport.
-        map.addListener("bounds_changed", () => {
-            searchBox.setBounds(map.getBounds());
-        });
-
-        let markers = [];
-
-        // Listen for the event fired when the user selects a prediction and retrieve
-        // more details for that place.
-        searchBox.addListener("places_changed", () => {
-            const places = searchBox.getPlaces();
-
-            if (places.length == 0) {
-                return;
-            }
-
-            // Clear out the old markers.
-            markers.forEach((marker) => {
-                marker.setMap(null);
-            });
-            markers = [];
-
-            // For each place, get the icon, name and location.
-            const bounds = new google.maps.LatLngBounds();
-
-            places.forEach((place) => {
-                if (!place.geometry || !place.geometry.location) {
-                    console.log("Returned place contains no geometry");
-                    return;
-                }
-
-                const icon = {
-                    url: place.icon,
-                    size: new google.maps.Size(71, 71),
-                    origin: new google.maps.Point(0, 0),
-                    anchor: new google.maps.Point(17, 34),
-                    scaledSize: new google.maps.Size(25, 25),
-                };
-
-                // Create a marker for each place.
-                markers.push(
-                    new google.maps.Marker({
-                        map,
-                        icon,
-                        title: place.name,
-                        position: place.geometry.location,
-                    }),
-                );
-                
-                if (place.geometry.viewport) {
-                    // Only geocodes have viewport.
-                    bounds.union(place.geometry.viewport);
-                } else {
-                    bounds.extend(place.geometry.location);
-                }
-            });
-            map.fitBounds(bounds);
-        });
-    }
-
-    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
-        infoWindow.setPosition(pos);
-        infoWindow.setContent(
-            browserHasGeolocation
-                ? "Error: The Geolocation service failed."
-                : "Error: Your browser doesn't support geolocation.",
-        );
-        infoWindow.open(map);
-    }
+<!-- Async script to load the Google Maps API -->
+<script>
+    // Ensure the initMap function is available globally before Google Maps loads
+    console.log('About to load Google Maps API...');
+    console.log('initMap function exists:', typeof window.initMap);
 </script>
 
-<%- include('partials/footer') %>
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap&libraries=marker,places">
+</script>
+
+<%# Footer omitted for full-screen layout %>
