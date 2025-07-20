@@ -1,3 +1,65 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.controls {
+  margin-top: 10px;
+  border: 1px solid transparent;
+  border-radius: 2px 0 0 2px;
+  box-sizing: border-box;
+  height: 32px;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  background-color: #fff;
+  font-family: Roboto;
+  font-size: 15px;
+  font-weight: 300;
+  margin-left: 12px;
+  padding: 0 11px 0 13px;
+  text-overflow: ellipsis;
+  width: 300px;
+}
+
+.controls:focus {
+  border-color: #4d90fe;
+}
+
+.map-controls {
+        position: absolute;
+        top: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        display: flex;
+        gap: 0.5rem;
+        background-color: white;
+        padding: 0.5rem;
+        border-radius: 0.375rem; /* rounded-md */
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .map-control-btn {
+        background-color: #f9fafb; /* gray-50 */
+        border: 1px solid #d1d5db; /* gray-300 */
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+    .map-control-btn:hover {
+        background-color: #f3f4f6; /* gray-100 */
+    }
+    /* Style for the active button */
+    .map-control-btn.active {
+        background-color: #4f46e5; /* indigo-600 */
+        color: white;
+        border-color: #4f46e5;
+    }
+    #clear-map-btn {
+        background-color: #fee2e2; /* red-100 */
+        border-color: #fca5a5; /* red-300 */
+        color: #b91c1c; /* red-700 */
+    }
+    #clear-map-btn:hover {
+        background-color: #fecaca; /* red-200 */
+    }

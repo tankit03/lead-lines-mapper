@@ -21,7 +21,8 @@
     "express-session": "^1.18.2",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

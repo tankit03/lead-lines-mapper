@@ -1,4 +1,39 @@
 <%- include('partials/header') %>
-<h1>Dashboard</h1>
-<h2>Welcome, <%= username %>!</h2>
-<%- include('partials/footer') %>
+
+<div class="relative h-[calc(100vh-4rem)] w-full"> 
+    <input
+      id="pac-input"
+      class="absolute top-4 left-4 z-20 w-80 px-4 py-2 rounded-md shadow-lg border-none focus:ring-2 focus:ring-indigo-500"
+      type="text"
+      placeholder="Search for a location"
+    />
+    <div id="map-controls" class="map-controls">
+        <button id="add-marker-btn" class="map-control-btn">Add Marker</button>
+        <button id="draw-path-btn" class="map-control-btn">Draw Path</button>
+        <button id="clear-map-btn" class="map-control-btn">Clear</button>
+    </div>
+    <div id="map" class="absolute inset-0"></div>
+</div>
+
+<!-- Configuration script to pass server-side data to client-side -->
+<script>
+    window.dashboardConfig = {
+        userId: "<%= session.userId %>",
+        username: "<%= session.username %>",
+        googleMapsApiKey: "<%= googleMapsApiKey %>"
+    };
+</script>
+<script src="/js/dashboard.js"></script>
+
+<!-- Async script to load the Google Maps API -->
+<script>
+    // Ensure the initMap function is available globally before Google Maps loads
+    console.log('About to load Google Maps API...');
+    console.log('initMap function exists:', typeof window.initMap);
+</script>
+
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap&libraries=marker,places">
+</script>
+
+<%# Footer omitted for full-screen layout %>

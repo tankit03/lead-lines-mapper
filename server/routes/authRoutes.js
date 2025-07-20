@@ -15,19 +15,19 @@ const isAuthenticated = (req, res, next) => {
 };
 
 // registration route
-// GET /register - Display the registration form
+
 router.get('/register', (req, res) => {
     res.render('register', { title: 'Register', error: null });
 });
 
 // login routes
-// GET /login - Display the login form
+
 router.get('/login', (req, res) => {
     res.render('login', { title: 'Login', error: null });
 });
 
 
-// POST /register - Handle registration logic
+// post register routes
 router.post('/register', async (req, res) => {
     const { email, username, password } = req.body;
 
@@ -37,10 +37,9 @@ router.post('/register', async (req, res) => {
     }
 
     try {
-        // Hash the password before storing it
+
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // SQL query to insert the new user
         const sql = `INSERT INTO users (email, username, password) VALUES (?, ?, ?)`;
         db.run(sql, [email, username, hashedPassword], function(err) {
             if (err) {
@@ -78,7 +77,6 @@ router.post('/login', (req, res) => {
             return res.render('login', { title: 'Login', error: 'Invalid email or password.' });
         }
 
-        // Compare the submitted password with the hashed password from the database
         const match = await bcrypt.compare(password, user.password);
 
         if (match) {
@@ -94,27 +92,23 @@ router.post('/login', (req, res) => {
     });
 });
 
+// profile page
+router.get('/profile', isAuthenticated, (req, res) => {
 
-// GET /dashboard - A page only accessible to logged-in users
-router.get('/dashboard', isAuthenticated, (req, res) => {
-    // The `isAuthenticated` middleware runs first. If the user is not logged in,
-    // they will be redirected and this handler will not be called.
-    res.render('dashboard', {
+    res.render('profile', {
         title: 'Dashboard',
-        username: req.session.username // Pass username to the template
+        username: req.session.username
     });
+
 });
 
-
 // logout route
-// POST /logout - Handle logout logic
 router.post('/logout', (req, res) => {
    
     req.session.destroy((err) => {
         if (err) {
             return res.redirect('/dashboard');
         }
-        // Clear the cookie and redirect to the login page
         res.clearCookie('connect.sid'); 
         res.redirect('/login');
     });
