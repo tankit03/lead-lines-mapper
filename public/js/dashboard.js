@@ -237,28 +237,31 @@ class MapDashboard {
     setMode(mode) {
         console.log('Setting mode to:', mode);
         this.currentMode = mode;
-
         const clearBtn = document.getElementById("clear-map-btn");
-        
-        // Update cursor style using Google Maps options
+        if (!clearBtn) {
+            console.warn('Clear button not found');
+            return;
+        }
+
+    
         if (mode === 'addingMarker') {
+            
             this.map.setOptions({ draggableCursor: 'crosshair' });
-            if(clearBtn){
-                clearBtn.style.display = "none";
-            }
+            console.log("this is the clear btn", clearBtn);
+            clearBtn.style.display = "none";
             console.log('Cursor set to crosshair for adding marker');
+
         } else if (mode === 'drawingPath') {
+            
             this.map.setOptions({ draggableCursor: 'crosshair' });
-            if(clearBtn){
-                clearBtn.style.display = "none";
-            }
+            clearBtn.style.display = "none";            
             console.log('Cursor set to crosshair for drawing path');
+
         } else {
+
             this.map.setOptions({ draggableCursor: 'default' });
-            if(clearBtn){
-                clearBtn.style.display = "block"; 
-                clearBtn.disabled = false;
-            }
+            clearBtn.style.display = "block"; 
+            clearBtn.disabled = false;
             console.log('Cursor reset to default grab');
         }
         console.log('Mode set to:', this.currentMode);
