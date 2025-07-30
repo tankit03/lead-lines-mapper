@@ -1,18 +1,36 @@
 <%- include('partials/header') %>
 
-<div class="relative h-[calc(100vh-4rem)] w-full"> 
-    <input
-      id="pac-input"
-      class="absolute top-4 left-4 z-20 w-80 px-4 py-2 rounded-md shadow-lg border-none focus:ring-2 focus:ring-brand-600"
-      type="text"
-      placeholder="Search for a location"
-    />
-    <div id="map-controls" class="map-controls">
-        <button id="add-marker-btn" class="map-control-btn">Add Marker</button>
-        <button id="draw-path-btn" class="map-control-btn">Draw Path</button>
-        <button id="clear-map-btn" class="map-control-btn">Clear</button>
-    </div>
+<div class="relative h-screen w-full"> 
     <div id="map" class="absolute inset-0"></div>
+    
+    <div class="floating-controls">
+        <div class="controls-content">
+            <div class="search-section">
+                <h3 class="section-title">Search Location</h3>
+                <input
+                    id="pac-input"
+                    class="search-input"
+                    type="text"
+                    placeholder="Search for a location"
+                />
+            </div>
+            
+            <div class="controls-section">
+                <h3 class="section-title">Map Tools</h3>
+                <div class="control-buttons">
+                    <button id="add-marker-btn" class="control-btn primary">
+                        📍 Add Marker
+                    </button>
+                    <button id="draw-path-btn" class="control-btn primary">
+                        🛤️ Draw Path
+                    </button>
+                    <button id="clear-map-btn" class="control-btn danger">
+                        🗑️ Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>

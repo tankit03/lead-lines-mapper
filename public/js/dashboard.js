@@ -127,30 +127,6 @@ class MapDashboard {
             console.error(error);
         }
     }
-
-    // Clear only the map overlays without making API calls
-    clearMapOverlays() {
-        // Clear all markers from the map
-        this.userMarkers.forEach(marker => marker.setMap(null));
-        this.userMarkers = [];
-        
-        // Clear path markers from the map
-        this.pathMarkers.forEach(marker => marker.setMap(null));
-        this.pathMarkers = [];
-        
-        // Clear all polylines from the map (except current drawing)
-        this.userPolylines.forEach(polyline => {
-            if (polyline !== this.currentPolyline) {
-                polyline.setMap(null);
-            }
-        });
-        this.userPolylines = this.currentPolyline ? [this.currentPolyline] : [];
-        
-        // Clear tracking sets
-        this.existingWaypointIds.clear();
-        this.existingPathIds.clear();
-    }
-
     // Controls and Listeners 
     initializeControls() {
         console.log('Initializing controls...');
@@ -172,7 +148,7 @@ class MapDashboard {
             if (this.currentMode === 'addingMarker') {
                 // Stop adding markers
                 console.log('Stopping marker adding mode');
-                addMarkerBtn.textContent = 'Add Marker';
+                addMarkerBtn.textContent = '📍 Add Marker';
                 addMarkerBtn.classList.remove('active'); 
                 this.setMode('none');
             } else {
@@ -181,7 +157,7 @@ class MapDashboard {
                 console.log('Starting marker adding mode');
                 
                 // Reset draw path button
-                drawPathBtn.textContent = 'Draw Path';
+                drawPathBtn.textContent = '🛤️ Draw Path';
                 drawPathBtn.classList.remove('active');
                 
                 // If there's a current polyline being drawn, clean it up
@@ -190,7 +166,7 @@ class MapDashboard {
                     this.currentPolyline = null;
                 }
 
-                addMarkerBtn.textContent = 'Stop Adding Markers';
+                addMarkerBtn.textContent = '📍 Stop Adding Markers';
                 addMarkerBtn.classList.add('active'); 
                 this.setMode('addingMarker');
 
@@ -201,9 +177,9 @@ class MapDashboard {
         clearBtn.addEventListener('click', async () => {
             console.log('Clear button clicked');
 
-            addMarkerBtn.textContent = 'Add Marker';
+            addMarkerBtn.textContent = '📍 Add Marker';
             addMarkerBtn.classList.remove('active');
-            drawPathBtn.textContent = 'Draw Path';
+            drawPathBtn.textContent = '🛤️ Draw Path';
             drawPathBtn.classList.remove('active')
 
             await this.clearOverlays();
@@ -213,7 +189,7 @@ class MapDashboard {
             console.log('Draw path button clicked, current mode:', this.currentMode);
             if (this.currentMode === 'drawingPath') {
                 console.log('Stopping path drawing...');
-                drawPathBtn.textContent = 'Draw Path';
+                drawPathBtn.textContent = '🛤️ Draw Path';
                 
                 // If the path has points, save it
                 if (this.currentPolyline && this.currentPolyline.getPath().getLength() > 1) {
@@ -230,11 +206,11 @@ class MapDashboard {
                 console.log('Starting path drawing...');
                 
                 // Reset add marker button
-                addMarkerBtn.textContent = 'Add Marker';
+                addMarkerBtn.textContent = '📍 Add Marker';
                 addMarkerBtn.classList.remove('active');
 
                 // Activate draw path button
-                drawPathBtn.textContent = 'Stop Drawing Path';
+                drawPathBtn.textContent = '🛤️ Stop Drawing Path';
                 drawPathBtn.classList.add('active');
                 this.setMode('drawingPath');
             }
@@ -261,16 +237,31 @@ class MapDashboard {
     setMode(mode) {
         console.log('Setting mode to:', mode);
         this.currentMode = mode;
-        
-        // Update cursor style using Google Maps options
+        const clearBtn = document.getElementById("clear-map-btn");
+        if (!clearBtn) {
+            console.warn('Clear button not found');
+            return;
+        }
+
+    
         if (mode === 'addingMarker') {
+            
             this.map.setOptions({ draggableCursor: 'crosshair' });
+            console.log("this is the clear btn", clearBtn);
+            clearBtn.style.display = "none";
             console.log('Cursor set to crosshair for adding marker');
+
         } else if (mode === 'drawingPath') {
+            
             this.map.setOptions({ draggableCursor: 'crosshair' });
+            clearBtn.style.display = "none";            
             console.log('Cursor set to crosshair for drawing path');
+
         } else {
+
             this.map.setOptions({ draggableCursor: 'default' });
+            clearBtn.style.display = "block"; 
+            clearBtn.disabled = false;
             console.log('Cursor reset to default grab');
         }
         console.log('Mode set to:', this.currentMode);
@@ -345,6 +336,7 @@ class MapDashboard {
                 url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
             }
         });
+        marker.userId = waypoint.userId;
         this.userMarkers.push(marker);
     }
     
@@ -413,6 +405,8 @@ class MapDashboard {
             geodesic: true, strokeColor: isCurrentUser ? '#4285F4' : '#b8340a', // Use a darker shade for saved paths
             strokeOpacity: 0.8, strokeWeight: 3, map: this.map,
         });
+
+        polyline.userId = pathData.userId;
         this.userPolylines.push(polyline);
     }
 
@@ -467,6 +461,44 @@ class MapDashboard {
     }
     
     // --- Clearing Logic ---
+
+    clearMapOverlays() {
+        // Filter and remove only current user's markers
+
+        this.userMarkers = this.userMarkers.filter(marker => {
+            if (Number(marker.userId) === Number(this.userId)) {
+                marker.setMap(null);
+                return false; // Remove from array
+            }
+            return true; // Keep in array
+        });
+        
+        // Clear all path markers (these are temporary drawing markers)
+        this.pathMarkers.forEach(marker => marker.setMap(null));
+        this.pathMarkers = [];
+        
+        // Filter and remove only current user's polylines (except current drawing)
+        this.userPolylines = this.userPolylines.filter(polyline => {
+            if (polyline === this.currentPolyline) {
+                return true; // Keep current drawing
+            }
+            if (Number(polyline.userId) === Number(this.userId)) {
+                polyline.setMap(null);
+                return false; // Remove from array
+            }
+            return true; // Keep other users' polylines
+        });
+        
+        // Only clear current user's IDs from tracking sets
+        // We'll need to rebuild these based on remaining elements
+        this.rebuildTrackingSets();
+    }
+
+    rebuildTrackingSets() {
+        this.existingWaypointIds.clear();
+        this.existingPathIds.clear();
+    }
+
     async clearOverlays() {
         console.log('Clear button clicked - clearing all data...');
         
@@ -485,6 +517,7 @@ class MapDashboard {
             console.log('Database cleared successfully:', result);
             
             // Clear all overlays from the map
+            clearMapOverlays()
             
             // Clear current polyline from the map
             if (this.currentPolyline) {

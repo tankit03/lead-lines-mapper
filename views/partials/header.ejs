@@ -7,29 +7,85 @@
     <link href="/css/output.css" rel="stylesheet">
 </head>
 <body class="h-full">
-    <!-- Navbar -->
-    <nav class="bg-white shadow-sm">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 justify-between">
-          <div class="flex">
-            <div class="flex flex-shrink-0 items-center space-x-2">
-              <a href="/" class="text-2xl font-bold text-brand-600">Leader</a>
+    <!-- Modern Floating Navbar -->
+    <nav class="floating-navbar">
+      <div class="navbar-content">
+        <div class="navbar-brand">
+          <a href="/" class="brand-link">Leader</a>
+        </div>
+        
+        <!-- Hamburger Menu Button -->
+        <button id="navbar-toggle" class="hamburger-btn">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        
+        <!-- Navigation Menu -->
+        <div id="navbar-menu" class="navbar-menu">
+          <div class="nav-section">
+            <h3 class="nav-section-title">Navigation</h3>
+            <div class="nav-links">
+              <% if (session && session.userId) { %>
+                <a href="/dashboard" class="nav-link">
+                  <span class="nav-icon">🗺️</span>
+                  Dashboard
+                </a>
+                <a href="/profile" class="nav-link">
+                  <span class="nav-icon">👤</span>
+                  Profile
+                </a>
+              <% } else { %>
+                <a href="/login" class="nav-link">
+                  <span class="nav-icon">🔑</span>
+                  Login
+                </a>
+                <a href="/register" class="nav-link">
+                  <span class="nav-icon">📝</span>
+                  Register
+                </a>
+              <% } %>
             </div>
           </div>
-          <div class="flex items-center space-x-4">
-            <!-- Desktop Nav Links -->
-            <% if (session && session.userId) { %>
-              <a href="/dashboard" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-brand-300 hover:text-brand-700">Dashboard</a>
-              <a href="/profile" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-brand-300 hover:text-brand-700">Profile</a>
-              <form action="/logout" method="POST">
-                <button type="submit" class="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Logout</button>
+          
+          <% if (session && session.userId) { %>
+          <div class="nav-section">
+            <h3 class="nav-section-title">Account</h3>
+            <div class="nav-links">
+              <form action="/logout" method="POST" class="logout-form">
+                <button type="submit" class="nav-link logout-btn">
+                  <span class="nav-icon">🚪</span>
+                  Logout
+                </button>
               </form>
-            <% } else { %>
-              <a href="/login" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-brand-300 hover:text-brand-700">Login</a>
-              <a href="/register" class="ml-4 rounded-md bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Register</a>
-            <% } %>
+            </div>
           </div>
+          <% } %>
         </div>
       </div>
     </nav>
+    
+    <script>
+      // Navbar toggle functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('navbar-toggle');
+        const menu = document.getElementById('navbar-menu');
+        
+        if (toggleBtn && menu) {
+          toggleBtn.addEventListener('click', function() {
+            menu.classList.toggle('active');
+            toggleBtn.classList.toggle('active');
+          });
+          
+          // Close menu when clicking outside
+          document.addEventListener('click', function(event) {
+            if (!toggleBtn.contains(event.target) && !menu.contains(event.target)) {
+              menu.classList.remove('active');
+              toggleBtn.classList.remove('active');
+            }
+          });
+        }
+      });
+    </script>
+    
     <main>
