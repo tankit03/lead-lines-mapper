@@ -172,7 +172,7 @@ class MapDashboard {
             if (this.currentMode === 'addingMarker') {
                 // Stop adding markers
                 console.log('Stopping marker adding mode');
-                addMarkerBtn.textContent = 'Add Marker';
+                addMarkerBtn.textContent = '📍 Add Marker';
                 addMarkerBtn.classList.remove('active'); 
                 this.setMode('none');
             } else {
@@ -181,7 +181,7 @@ class MapDashboard {
                 console.log('Starting marker adding mode');
                 
                 // Reset draw path button
-                drawPathBtn.textContent = 'Draw Path';
+                drawPathBtn.textContent = '🛤️ Draw Path';
                 drawPathBtn.classList.remove('active');
                 
                 // If there's a current polyline being drawn, clean it up
@@ -190,7 +190,7 @@ class MapDashboard {
                     this.currentPolyline = null;
                 }
 
-                addMarkerBtn.textContent = 'Stop Adding Markers';
+                addMarkerBtn.textContent = '📍 Stop Adding Markers';
                 addMarkerBtn.classList.add('active'); 
                 this.setMode('addingMarker');
 
@@ -201,9 +201,9 @@ class MapDashboard {
         clearBtn.addEventListener('click', async () => {
             console.log('Clear button clicked');
 
-            addMarkerBtn.textContent = 'Add Marker';
+            addMarkerBtn.textContent = '📍 Add Marker';
             addMarkerBtn.classList.remove('active');
-            drawPathBtn.textContent = 'Draw Path';
+            drawPathBtn.textContent = '🛤️ Draw Path';
             drawPathBtn.classList.remove('active')
 
             await this.clearOverlays();
@@ -213,7 +213,7 @@ class MapDashboard {
             console.log('Draw path button clicked, current mode:', this.currentMode);
             if (this.currentMode === 'drawingPath') {
                 console.log('Stopping path drawing...');
-                drawPathBtn.textContent = 'Draw Path';
+                drawPathBtn.textContent = '🛤️ Draw Path';
                 
                 // If the path has points, save it
                 if (this.currentPolyline && this.currentPolyline.getPath().getLength() > 1) {
@@ -230,11 +230,11 @@ class MapDashboard {
                 console.log('Starting path drawing...');
                 
                 // Reset add marker button
-                addMarkerBtn.textContent = 'Add Marker';
+                addMarkerBtn.textContent = '📍 Add Marker';
                 addMarkerBtn.classList.remove('active');
 
                 // Activate draw path button
-                drawPathBtn.textContent = 'Stop Drawing Path';
+                drawPathBtn.textContent = '🛤️ Stop Drawing Path';
                 drawPathBtn.classList.add('active');
                 this.setMode('drawingPath');
             }

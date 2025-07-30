@@ -24,42 +24,152 @@
   border-color: #d73f09;
 }
 
-.map-controls {
-        position: absolute;
+/* Modern Floating Controls Panel */
+.floating-controls {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    z-index: 30;
+    width: 320px;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.controls-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.search-section, .controls-section {
+    background: #fef7f2;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #f9d5c0;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #942a0e;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #f9d5c0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(215, 63, 9, 0.1);
+}
+
+.search-input:focus {
+    border-color: #D73F09;
+    background: white;
+    box-shadow: 0 4px 12px rgba(215, 63, 9, 0.2);
+    transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+    color: #666;
+    opacity: 0.7;
+}
+
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 2px solid #f9d5c0;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    color: #942a0e;
+}
+
+.control-btn.primary:hover {
+    background: rgba(253, 238, 229, 0.95);
+    border-color: #D73F09;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(215, 63, 9, 0.2);
+}
+
+.control-btn.primary.active {
+    background: rgba(215, 63, 9, 0.95);
+    color: white;
+    border-color: #D73F09;
+    box-shadow: 0 4px 12px rgba(215, 63, 9, 0.3);
+}
+
+.control-btn.danger {
+    border-color: #fca5a5;
+    background: rgba(254, 226, 226, 0.95);
+    color: #b91c1c;
+}
+
+.control-btn.danger:hover {
+    background: rgba(254, 202, 202, 0.95);
+    border-color: #f87171;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(185, 28, 28, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .floating-controls {
+        width: calc(100% - 2rem);
+        left: 1rem;
+        right: 1rem;
         top: 1rem;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 20;
-        display: flex;
-        gap: 0.5rem;
-        background-color: white;
-        padding: 0.5rem;
-        border-radius: 0.375rem; /* rounded-md */
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        max-height: calc(100vh - 6rem);
     }
-    .map-control-btn {
-        background-color: #f9fafb; /* gray-50 */
-        border: 1px solid #d1d5db; /* gray-300 */
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out;
+    
+    .controls-content {
+        padding: 1rem;
+        gap: 1rem;
     }
-    .map-control-btn:hover {
-        background-color: #f3f4f6; /* gray-100 */
+    
+    .search-section, .controls-section {
+        padding: 1rem;
     }
-    /* Style for the active button */
-    .map-control-btn.active {
-        background-color: #4f46e5; /* indigo-600 */
-        color: white;
-        border-color: #4f46e5;
+    
+    .control-buttons {
+        flex-direction: row;
+        gap: 8px;
+        flex-wrap: wrap;
     }
-    #clear-map-btn {
-        background-color: #fee2e2; /* red-100 */
-        border-color: #fca5a5; /* red-300 */
-        color: #b91c1c; /* red-700 */
+    
+    .control-btn {
+        flex: 1;
+        min-width: calc(50% - 4px);
+        padding: 12px 8px;
+        font-size: 12px;
     }
-    #clear-map-btn:hover {
-        background-color: #fecaca; /* red-200 */
-    }
+}
