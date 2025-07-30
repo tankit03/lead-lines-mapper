@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
-const { broadcast } = require('../services/websocket'); 
+const db = require('../database'); 
 
 // Middleware to check for authentication
 const isAuthenticated = (req, res, next) => {
@@ -11,13 +10,14 @@ const isAuthenticated = (req, res, next) => {
     res.redirect('/login');
 };
 
-// This entire module now exports a function that accepts the `wss` instance
-module.exports = (wss) => {
+module.exports = router;
     // GET /dashboard
     router.get('/dashboard', isAuthenticated, (req, res) => {
         res.render('dashboard', {
             title: 'Dashboard',
             username: req.session.username,
+            session: req.session,
+            googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
         });
     });
 
@@ -49,9 +49,6 @@ module.exports = (wss) => {
             }
 
             const newWaypoint = { id: this.lastID, lat, lng, userId, username };
-            
-            // Broadcast the new waypoint to all clients
-            broadcast({ type: 'new_waypoint', payload: newWaypoint });
             
             res.status(201).json(newWaypoint);
         });
@@ -103,14 +100,6 @@ module.exports = (wss) => {
             
             const newPath = { id: this.lastID, userId, username, path };
             console.log('Path saved to database successfully:', newPath);
-
-            // Broadcast the new path to all clients
-            try {
-                broadcast({ type: 'new_path', payload: newPath });
-                console.log('Path broadcasted successfully');
-            } catch (broadcastError) {
-                console.error('Error broadcasting path:', broadcastError);
-            }
             
             res.status(201).json(newPath);
         });
@@ -213,5 +202,3 @@ module.exports = (wss) => {
         });
     });
 
-    return router;
-};

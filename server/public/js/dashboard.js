@@ -5,22 +5,25 @@ class MapDashboard {
         this.username = config.username;
         this.googleMapsApiKey = config.googleMapsApiKey;
         this.map = null;
-        this.ws = null; 
 
         this.currentMode = 'none';
         this.userMarkers = [];
         this.pathMarkers = [];
         this.userPolylines = [];
         this.currentPolyline = null;
+        this.existingWaypointIds = new Set(); // Track existing waypoint IDs
+        this.existingPathIds = new Set(); // Track existing path IDs
     }
 
     async initMap() {
         console.log('MapDashboard.initMap() called');
         console.log('Starting map initialization...');
         
+        
         // Map Initialization
         const { Map } = await google.maps.importLibrary("maps");
         const { Place } = await google.maps.importLibrary("places");
+        
         let position = { lat: 45.5231, lng: -122.6765 };
         let zoom = 10;
         if (navigator.geolocation) {
@@ -30,30 +33,32 @@ class MapDashboard {
                 });
                 position = { lat: userPosition.coords.latitude, lng: userPosition.coords.longitude };
                 zoom = 15;
-            } catch (error) { console.warn('Could not get user location:', error.message); }
+            } catch (error) 
+            { 
+                console.warn('Could not get user location:', error.message); 
+            }
         }
         
         console.log('Creating map at position:', position);
         this.map = new Map(document.getElementById("map"), {
             center: position, zoom: zoom, mapId: "YOUR_MAP_ID",
             fullscreenControl: false, mapTypeControl: false, scaleControl: true,
-            streetViewControl: true, rotateControl: true, clickableIcons: false
+            streetViewControl: true, rotateControl: true, clickableIcons: false,
+            draggableCursor: 'default'
         });
         
         console.log('Map created successfully');
+        // this.map.setOptions({ draggableCursor: 'default' });
 
-        // --- Initialize all functionalities ---
-        console.log('Initializing search...');
-        await this.initializeSearch();
-        console.log('Initializing controls...');
+        await this.initializeSearch();  
         this.initializeControls();
-        console.log('Initializing map listener...');
         this.initializeMapListener();
-        console.log('Initializing WebSocket...');
-        this.initializeWebSocket(); // NEW: Connect to WebSocket
-        console.log('Loading initial data...');
-        this.loadInitialData(); // NEW: Load existing data from DB
+        this.loadInitialData();
         
+        console.log("initialized initializeSearch"); 
+        console.log("initialized initializeControls"); 
+        console.log("initialized initializeMapListener"); 
+        console.log("initialized loadInitialData");
         console.log('All initialization complete!');
     }
     
@@ -64,7 +69,12 @@ class MapDashboard {
             const responseWaypoints = await fetch('/waypoints');
             if (!responseWaypoints.ok) throw new Error('Failed to fetch waypoints');
             const waypoints = await responseWaypoints.json();
-            waypoints.forEach(waypoint => this.drawMarker(waypoint));
+            waypoints.forEach(waypoint => {
+                if (!this.existingWaypointIds.has(waypoint.id)) {
+                    this.drawMarker(waypoint, false); // No animation for initial load
+                    this.existingWaypointIds.add(waypoint.id);
+                }
+            });
         } catch (error) {
             console.error(error);
         }
@@ -74,38 +84,71 @@ class MapDashboard {
             const responsePaths = await fetch('/paths');
             if (!responsePaths.ok) throw new Error('Failed to fetch paths');
             const paths = await responsePaths.json();
-            paths.forEach(pathData => this.drawPath(pathData));
+            paths.forEach(pathData => {
+                if (!this.existingPathIds.has(pathData.id)) {
+                    this.drawPath(pathData);
+                    this.existingPathIds.add(pathData.id);
+                }
+            });
         } catch (error) {
             console.error(error);
         }
     }
-    
-    // Initialize WebSocket connection and message handling
-    initializeWebSocket() {
-        // Use wss:// in production with a secure server
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        this.ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
 
-        this.ws.onopen = () => console.log('WebSocket connection established.');
-        this.ws.onerror = (error) => console.error('WebSocket Error:', error);
+    // Load new data and only animate new items
+    async loadNewData() {
+        // Fetch and draw new waypoints
+        try {
+            const responseWaypoints = await fetch('/waypoints');
+            if (!responseWaypoints.ok) throw new Error('Failed to fetch waypoints');
+            const waypoints = await responseWaypoints.json();
+            waypoints.forEach(waypoint => {
+                if (!this.existingWaypointIds.has(waypoint.id)) {
+                    this.drawMarker(waypoint, true); // Animate new markers
+                    this.existingWaypointIds.add(waypoint.id);
+                }
+            });
+        } catch (error) {
+            console.error(error);
+        }
 
-        this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+        // Fetch and draw new paths
+        try {
+            const responsePaths = await fetch('/paths');
+            if (!responsePaths.ok) throw new Error('Failed to fetch paths');
+            const paths = await responsePaths.json();
+            paths.forEach(pathData => {
+                if (!this.existingPathIds.has(pathData.id)) {
+                    this.drawPath(pathData);
+                    this.existingPathIds.add(pathData.id);
+                }
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
-            // Avoid re-drawing what we just sent
-            if (data.payload.username === this.username) {
-                // We already drew it optimistically. A more robust solution might
-                // involve assigning a temporary ID and updating it upon server response.
-                // For now, this prevents duplication.
-                // return;
+    // Clear only the map overlays without making API calls
+    clearMapOverlays() {
+        // Clear all markers from the map
+        this.userMarkers.forEach(marker => marker.setMap(null));
+        this.userMarkers = [];
+        
+        // Clear path markers from the map
+        this.pathMarkers.forEach(marker => marker.setMap(null));
+        this.pathMarkers = [];
+        
+        // Clear all polylines from the map (except current drawing)
+        this.userPolylines.forEach(polyline => {
+            if (polyline !== this.currentPolyline) {
+                polyline.setMap(null);
             }
-
-            if (data.type === 'new_waypoint') {
-                this.drawMarker(data.payload);
-            } else if (data.type === 'new_path') {
-                this.drawPath(data.payload);
-            }
-        };
+        });
+        this.userPolylines = this.currentPolyline ? [this.currentPolyline] : [];
+        
+        // Clear tracking sets
+        this.existingWaypointIds.clear();
+        this.existingPathIds.clear();
     }
 
     // Controls and Listeners 
@@ -124,11 +167,24 @@ class MapDashboard {
         }
 
         addMarkerBtn.addEventListener('click', () => {
-            console.log('Add marker button clicked');
-            drawPathBtn.textContent = 'Draw Path';
-            this.setMode('addingMarker');
+            console.log('Add marker button clicked, current mode:', this.currentMode);
+            
+            if (this.currentMode === 'addingMarker') {
+                // Stop adding markers
+                console.log('Stopping marker adding mode');
+                addMarkerBtn.textContent = 'Add Marker';
+                addMarkerBtn.classList.remove('active'); 
+                this.setMode('none');
+            } else {
+                
+                // Activate marker mode
+                console.log("set mode is: ", this.setMode);
+                addMarkerBtn.textContent = 'Stop Adding Markers';
+                addMarkerBtn.classList.add('active'); // Optional: for styling
+                this.setMode('addingMarker');
+            }
         });
-        
+                
         // Clear button - now clears both map and database
         clearBtn.addEventListener('click', async () => {
             console.log('Clear button clicked');
@@ -149,11 +205,13 @@ class MapDashboard {
                     console.log('Path has insufficient points (', 
                         this.currentPolyline ? this.currentPolyline.getPath().getLength() : 'no polyline', 
                         '), not saving');
-                }
+                } 
+                drawPathBtn.classList.remove('active');
                 this.setMode('none');
             } else {
                 console.log('Starting path drawing...');
                 drawPathBtn.textContent = 'Stop Drawing Path';
+                drawPathBtn.classList.add('active');
                 this.setMode('drawingPath');
             }
         });
@@ -168,11 +226,11 @@ class MapDashboard {
             if (this.currentMode === 'addingMarker') {
                 console.log('Adding marker at:', event.latLng.lat(), event.latLng.lng());
                 this.addMarkerAtLocation(event.latLng);
-                this.setMode('none');
+                // this.setMode('none');
             } else if (this.currentMode === 'drawingPath') {
                 console.log('Adding path point at:', event.latLng.lat(), event.latLng.lng());
                 this.addPathPoint(event.latLng);
-            }
+            } 
         });
         console.log('Map listener initialized');
     }
@@ -181,68 +239,88 @@ class MapDashboard {
         console.log('Setting mode to:', mode);
         this.currentMode = mode;
         
-        // Update cursor style based on mode
-        const mapDiv = document.getElementById('map');
+        // Update cursor style using Google Maps options
         if (mode === 'addingMarker') {
-            mapDiv.style.cursor = 'crosshair';
+            this.map.setOptions({ draggableCursor: 'crosshair' });
+            console.log('Cursor set to crosshair for adding marker');
         } else if (mode === 'drawingPath') {
-            mapDiv.style.cursor = 'crosshair';
+            this.map.setOptions({ draggableCursor: 'crosshair' });
+            console.log('Cursor set to crosshair for drawing path');
         } else {
-            mapDiv.style.cursor = 'default';
+            this.map.setOptions({ draggableCursor: 'default' });
+            console.log('Cursor reset to default grab');
         }
         console.log('Mode set to:', this.currentMode);
     }
 
     async initializeSearch() {
+        console.log('Initializing search...');
+        
         // Import the places library
         const { SearchBox } = await google.maps.importLibrary("places");
         
-        const searchBox = new SearchBox(document.getElementById('pac-input'));
-        
+        // Create the search box and link it to the UI element
+        const input = document.getElementById("pac-input");
+        const searchBox = new SearchBox(input);
+
         // Bias the SearchBox results towards current map's viewport
-        this.map.addListener('bounds_changed', () => {
+        this.map.addListener("bounds_changed", () => {
             searchBox.setBounds(this.map.getBounds());
         });
 
-        searchBox.addListener('places_changed', () => {
+        // Listen for place selection and center map
+        searchBox.addListener("places_changed", () => {
             const places = searchBox.getPlaces();
-            if (places.length === 0) return;
 
-            // For each place, get the icon, name and location
-            const bounds = new google.maps.LatLngBounds();
-            places.forEach((place) => {
-                if (!place.geometry || !place.geometry.location) {
-                    console.log("Returned place contains no geometry");
-                    return;
-                }
+            if (places.length == 0) {
+                return;
+            }
 
-                if (place.geometry.viewport) {
-                    // Only geocodes have viewport
-                    bounds.union(place.geometry.viewport);
-                } else {
-                    bounds.extend(place.geometry.location);
-                }
-            });
-            this.map.fitBounds(bounds);
+            const place = places[0]; // Take the first place
+            
+            if (!place.geometry || !place.geometry.location) {
+                console.log("Selected place contains no geometry");
+                return;
+            }
+
+            // Center map on the selected place
+            if (place.geometry.viewport) {
+                this.map.fitBounds(place.geometry.viewport);
+            } else {
+                this.map.setCenter(place.geometry.location);
+                this.map.setZoom(17);
+            }
+            
+            console.log('Map centered on:', place.name);
         });
+        
+        console.log('Search initialized');
     }
-
+ 
     // Drawing and Saving Logic
 
     // This function is now just for interactive adding
     addMarkerAtLocation(location) {
-        // Optimistically draw the marker on the map
-        this.drawMarker({ lat: location.lat(), lng: location.lng() });
-        // Save the marker to the database
+        // Save the marker to the database first
         this.saveWaypoint({ lat: location.lat(), lng: location.lng() });
     }
 
-    // Generic function to draw a marker (used by load, websocket, and interactive add)
-    drawMarker(waypoint) {
+    // Generic function to draw a marker (used by load and interactive add)
+    drawMarker(waypoint, animate = false) {
+        // Convert both to numbers for comparison
+        const isCurrentUser = Number(waypoint.userId) === Number(this.userId);
+
+        console.log("current user", isCurrentUser);
+
         const marker = new google.maps.Marker({
             position: { lat: waypoint.lat, lng: waypoint.lng },
             map: this.map,
-            animation: google.maps.Animation.DROP,
+            animation: animate ? google.maps.Animation.DROP : null,
+            icon: isCurrentUser ? {
+                url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            } : {
+                url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+            }
         });
         this.userMarkers.push(marker);
     }
@@ -263,9 +341,11 @@ class MapDashboard {
             
             const result = await response.json();
             console.log('Waypoint saved successfully:', result);
+            
+            // Load new data to show the new waypoint with animation
+            await this.loadNewData();
         } catch (error) {
             console.error('Failed to save waypoint:', error);
-            // Here you could add logic to remove the optimistic marker
         }
     }
     
@@ -277,7 +357,7 @@ class MapDashboard {
             console.log('Creating new polyline...');
             // Create a new polyline but don't save it yet
             this.currentPolyline = new google.maps.Polyline({
-                path: [], geodesic: true, strokeColor: '#FF0000',
+                path: [], geodesic: true, strokeColor: '#d73f09',
                 strokeOpacity: 1.0, strokeWeight: 3, map: this.map,
             });
             this.userPolylines.push(this.currentPolyline);
@@ -289,7 +369,7 @@ class MapDashboard {
             icon: { 
                 path: google.maps.SymbolPath.CIRCLE, 
                 scale: 5, 
-                fillColor: '#FF0000', 
+                fillColor: '#d73f09', 
                 fillOpacity: 1, 
                 strokeWeight: 1 
             }
@@ -304,9 +384,10 @@ class MapDashboard {
 
     // NEW: Generic function to draw a path object from the server
     drawPath(pathData) {
+        const isCurrentUser = Number(pathData.userId) === Number(this.userId);
         const polyline = new google.maps.Polyline({
             path: pathData.path, // The server now provides the path array directly
-            geodesic: true, strokeColor: '#0000FF', // Use a different color for saved paths
+            geodesic: true, strokeColor: isCurrentUser ? '#4285F4' : '#b8340a', // Use a darker shade for saved paths
             strokeOpacity: 0.8, strokeWeight: 3, map: this.map,
         });
         this.userPolylines.push(polyline);
@@ -353,6 +434,9 @@ class MapDashboard {
             // Clear the current polyline after saving
             this.currentPolyline = null;
             
+            // Load new data to show the new path
+            await this.loadNewData();
+            
         } catch (error) {
             console.error('Failed to save path:', error);
             console.error('Error details:', error.message);
@@ -377,17 +461,7 @@ class MapDashboard {
             const result = await response.json();
             console.log('Database cleared successfully:', result);
             
-            // Clear all markers from the map
-            this.userMarkers.forEach(marker => marker.setMap(null));
-            this.userMarkers = [];
-            
-            // Clear path markers from the map
-            this.pathMarkers.forEach(marker => marker.setMap(null));
-            this.pathMarkers = [];
-            
-            // Clear all polylines from the map
-            this.userPolylines.forEach(polyline => polyline.setMap(null));
-            this.userPolylines = [];
+            // Clear all overlays from the map
             
             // Clear current polyline from the map
             if (this.currentPolyline) {
@@ -409,6 +483,7 @@ class MapDashboard {
         } catch (error) {
             console.error('Failed to clear data:', error);
             // Still clear the map display even if the database operation failed
+            this.clearMapOverlays();
         }
     }
 }
@@ -423,35 +498,6 @@ function initMap() {
         window.mapDashboard.initMap();
     } else {
         console.error('dashboardConfig not found!');
+        setTimeout(initMap, 100);
     }
 }
-
-// Backup initialization in case the callback doesn't work
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded');
-    console.log('Google maps available:', typeof google !== 'undefined');
-    
-    // Test if buttons exist
-    const addMarkerBtn = document.getElementById('add-marker-btn');
-    const drawPathBtn = document.getElementById('draw-path-btn');
-    const clearBtn = document.getElementById('clear-map-btn');
-    console.log('Buttons found on DOM load:');
-    console.log('- Add Marker:', addMarkerBtn);
-    console.log('- Draw Path:', drawPathBtn);
-    console.log('- Clear:', clearBtn);
-    
-    // If Google Maps is already loaded but initMap wasn't called, call it manually
-    if (typeof google !== 'undefined' && !window.mapDashboard) {
-        console.log('Google Maps is loaded but initMap was not called, calling manually...');
-        initMap();
-    }
-});
-
-// Also try to initialize when the window loads
-window.addEventListener('load', function() {
-    console.log('Window loaded');
-    if (typeof google !== 'undefined' && !window.mapDashboard) {
-        console.log('Google Maps is loaded on window load, calling initMap...');
-        initMap();
-    }
-});

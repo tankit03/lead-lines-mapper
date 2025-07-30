@@ -3,7 +3,7 @@
 <div class="relative h-[calc(100vh-4rem)] w-full"> 
     <input
       id="pac-input"
-      class="absolute top-4 left-4 z-20 w-80 px-4 py-2 rounded-md shadow-lg border-none focus:ring-2 focus:ring-indigo-500"
+      class="absolute top-4 left-4 z-20 w-80 px-4 py-2 rounded-md shadow-lg border-none focus:ring-2 focus:ring-brand-600"
       type="text"
       placeholder="Search for a location"
     />
@@ -15,7 +15,6 @@
     <div id="map" class="absolute inset-0"></div>
 </div>
 
-<!-- Configuration script to pass server-side data to client-side -->
 <script>
     window.dashboardConfig = {
         userId: "<%= session.userId %>",
@@ -23,17 +22,27 @@
         googleMapsApiKey: "<%= googleMapsApiKey %>"
     };
 </script>
+
 <script src="/js/dashboard.js"></script>
-
-<!-- Async script to load the Google Maps API -->
+<!-- <script async
+    src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&v=weekly&callback=initMap">
+</script> -->
 <script>
-    // Ensure the initMap function is available globally before Google Maps loads
-    console.log('About to load Google Maps API...');
-    console.log('initMap function exists:', typeof window.initMap);
-</script>
+  (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.googleapis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+        key: "<%= googleMapsApiKey %>",
+        v: "weekly"
+    });
 
-<script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap&libraries=marker,places">
-</script>
+    document.addEventListener('DOMContentLoaded', function() {
+        google.maps.importLibrary("maps").then(() => {
+            if (window.dashboardConfig && typeof MapDashboard !== 'undefined') {
+                console.log('Initializing MapDashboard via Dynamic Library Import');
+                window.mapDashboard = new MapDashboard(window.dashboardConfig);
+                window.mapDashboard.initMap();
+            }
+        }).catch(error => {
+            console.error('Failed to load Google Maps:', error);
+        });
+    });
 
-<%# Footer omitted for full-screen layout %>
+</script>
