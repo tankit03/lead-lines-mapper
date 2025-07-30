@@ -176,18 +176,36 @@ class MapDashboard {
                 addMarkerBtn.classList.remove('active'); 
                 this.setMode('none');
             } else {
+
+                // makes sure mode is set to 
+                console.log('Starting marker adding mode');
                 
-                // Activate marker mode
-                console.log("set mode is: ", this.setMode);
+                // Reset draw path button
+                drawPathBtn.textContent = 'Draw Path';
+                drawPathBtn.classList.remove('active');
+                
+                // If there's a current polyline being drawn, clean it up
+                if (this.currentPolyline) {
+                    this.currentPolyline.setMap(null);
+                    this.currentPolyline = null;
+                }
+
                 addMarkerBtn.textContent = 'Stop Adding Markers';
-                addMarkerBtn.classList.add('active'); // Optional: for styling
+                addMarkerBtn.classList.add('active'); 
                 this.setMode('addingMarker');
+
             }
         });
                 
         // Clear button - now clears both map and database
         clearBtn.addEventListener('click', async () => {
             console.log('Clear button clicked');
+
+            addMarkerBtn.textContent = 'Add Marker';
+            addMarkerBtn.classList.remove('active');
+            drawPathBtn.textContent = 'Draw Path';
+            drawPathBtn.classList.remove('active')
+
             await this.clearOverlays();
         });
 
@@ -210,12 +228,17 @@ class MapDashboard {
                 this.setMode('none');
             } else {
                 console.log('Starting path drawing...');
+                
+                // Reset add marker button
+                addMarkerBtn.textContent = 'Add Marker';
+                addMarkerBtn.classList.remove('active');
+
+                // Activate draw path button
                 drawPathBtn.textContent = 'Stop Drawing Path';
                 drawPathBtn.classList.add('active');
                 this.setMode('drawingPath');
             }
         });
-        
         console.log('Controls initialized successfully');
     }
 
