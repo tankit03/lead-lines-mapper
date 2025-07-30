@@ -127,30 +127,6 @@ class MapDashboard {
             console.error(error);
         }
     }
-
-    // Clear only the map overlays without making API calls
-    clearMapOverlays() {
-        // Clear all markers from the map
-        this.userMarkers.forEach(marker => marker.setMap(null));
-        this.userMarkers = [];
-        
-        // Clear path markers from the map
-        this.pathMarkers.forEach(marker => marker.setMap(null));
-        this.pathMarkers = [];
-        
-        // Clear all polylines from the map (except current drawing)
-        this.userPolylines.forEach(polyline => {
-            if (polyline !== this.currentPolyline) {
-                polyline.setMap(null);
-            }
-        });
-        this.userPolylines = this.currentPolyline ? [this.currentPolyline] : [];
-        
-        // Clear tracking sets
-        this.existingWaypointIds.clear();
-        this.existingPathIds.clear();
-    }
-
     // Controls and Listeners 
     initializeControls() {
         console.log('Initializing controls...');
@@ -261,16 +237,28 @@ class MapDashboard {
     setMode(mode) {
         console.log('Setting mode to:', mode);
         this.currentMode = mode;
+
+        const clearBtn = document.getElementById("clear-map-btn");
         
         // Update cursor style using Google Maps options
         if (mode === 'addingMarker') {
             this.map.setOptions({ draggableCursor: 'crosshair' });
+            if(clearBtn){
+                clearBtn.style.display = "none";
+            }
             console.log('Cursor set to crosshair for adding marker');
         } else if (mode === 'drawingPath') {
             this.map.setOptions({ draggableCursor: 'crosshair' });
+            if(clearBtn){
+                clearBtn.style.display = "none";
+            }
             console.log('Cursor set to crosshair for drawing path');
         } else {
             this.map.setOptions({ draggableCursor: 'default' });
+            if(clearBtn){
+                clearBtn.style.display = "block"; 
+                clearBtn.disabled = false;
+            }
             console.log('Cursor reset to default grab');
         }
         console.log('Mode set to:', this.currentMode);
@@ -345,6 +333,7 @@ class MapDashboard {
                 url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
             }
         });
+        marker.userId = waypoint.userId;
         this.userMarkers.push(marker);
     }
     
@@ -413,6 +402,8 @@ class MapDashboard {
             geodesic: true, strokeColor: isCurrentUser ? '#4285F4' : '#b8340a', // Use a darker shade for saved paths
             strokeOpacity: 0.8, strokeWeight: 3, map: this.map,
         });
+
+        polyline.userId = pathData.userId;
         this.userPolylines.push(polyline);
     }
 
@@ -467,6 +458,44 @@ class MapDashboard {
     }
     
     // --- Clearing Logic ---
+
+    clearMapOverlays() {
+        // Filter and remove only current user's markers
+
+        this.userMarkers = this.userMarkers.filter(marker => {
+            if (Number(marker.userId) === Number(this.userId)) {
+                marker.setMap(null);
+                return false; // Remove from array
+            }
+            return true; // Keep in array
+        });
+        
+        // Clear all path markers (these are temporary drawing markers)
+        this.pathMarkers.forEach(marker => marker.setMap(null));
+        this.pathMarkers = [];
+        
+        // Filter and remove only current user's polylines (except current drawing)
+        this.userPolylines = this.userPolylines.filter(polyline => {
+            if (polyline === this.currentPolyline) {
+                return true; // Keep current drawing
+            }
+            if (Number(polyline.userId) === Number(this.userId)) {
+                polyline.setMap(null);
+                return false; // Remove from array
+            }
+            return true; // Keep other users' polylines
+        });
+        
+        // Only clear current user's IDs from tracking sets
+        // We'll need to rebuild these based on remaining elements
+        this.rebuildTrackingSets();
+    }
+
+    rebuildTrackingSets() {
+        this.existingWaypointIds.clear();
+        this.existingPathIds.clear();
+    }
+
     async clearOverlays() {
         console.log('Clear button clicked - clearing all data...');
         
@@ -485,6 +514,7 @@ class MapDashboard {
             console.log('Database cleared successfully:', result);
             
             // Clear all overlays from the map
+            clearMapOverlays()
             
             // Clear current polyline from the map
             if (this.currentPolyline) {
