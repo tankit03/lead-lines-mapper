@@ -1,3 +1,252 @@
 <%- include('partials/header') %>
-<h1>Hello username <%= username %></h1>
+
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <!-- Background decoration -->
+    <div class="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
+        <div class="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-brand-400 to-brand-600 opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"></div>
+    </div>
+    
+    <div class="mx-auto max-w-2xl">
+        <!-- Profile Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+                Profile Settings
+            </h1>
+            <p class="mt-4 text-lg text-gray-600">
+                Manage your account information and preferences
+            </p>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-green-800 font-medium"><%= success %></p>
+            </div>
+        <% } %>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-800 font-medium"><%= error %></p>
+            </div>
+        <% } %>
+
+        <!-- Profile Card -->
+        <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+            <!-- Profile Header Section -->
+            <div class="bg-gradient-to-r from-brand-50 to-brand-100 px-6 py-8 border-b border-brand-200">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-brand-600 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold">
+                        <%= username.charAt(0).toUpperCase() %>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-brand-900">Welcome, <%= username %>!</h2>
+                        <p class="text-brand-700">Manage your account settings below</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Forms -->
+            <div class="p-6 space-y-8">
+                <!-- Update Email Section -->
+                <div class="bg-gray-50/50 rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="text-brand-600">📧</span>
+                        Update Email Address
+                    </h3>
+                    <form action="/update-email" method="POST" class="space-y-4">
+                        <div>
+                            <label for="current-email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Current Email
+                            </label>
+                            <input
+                                type="email"
+                                id="current-email"
+                                value="<%= email %>"
+                                disabled
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                            />
+                        </div>
+                        <div>
+                            <label for="new-email" class="block text-sm font-medium text-gray-700 mb-2">
+                                New Email Address
+                            </label>
+                            <input
+                                type="email"
+                                id="new-email"
+                                name="email"
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-colors"
+                                placeholder="Enter new email address"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            class="w-full bg-brand-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-700 focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 transition-colors"
+                        >
+                            Update Email
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Update Username Section -->
+                <div class="bg-gray-50/50 rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="text-brand-600">👤</span>
+                        Update Username
+                    </h3>
+                    <form action="/update-username" method="POST" class="space-y-4">
+                        <div>
+                            <label for="current-username" class="block text-sm font-medium text-gray-700 mb-2">
+                                Current Username
+                            </label>
+                            <input
+                                type="text"
+                                id="current-username"
+                                value="<%= username %>"
+                                disabled
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                            />
+                        </div>
+                        <div>
+                            <label for="new-username" class="block text-sm font-medium text-gray-700 mb-2">
+                                New Username
+                            </label>
+                            <input
+                                type="text"
+                                id="new-username"
+                                name="username"
+                                required
+                                minlength="3"
+                                maxlength="20"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-colors"
+                                placeholder="Enter new username"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            class="w-full bg-brand-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-700 focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 transition-colors"
+                        >
+                            Update Username
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Update Password Section -->
+                <div class="bg-gray-50/50 rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="text-brand-600">🔒</span>
+                        Change Password
+                    </h3>
+                    <form action="/update-password" method="POST" class="space-y-4">
+                        <div>
+                            <label for="current-password" class="block text-sm font-medium text-gray-700 mb-2">
+                                Current Password
+                            </label>
+                            <input
+                                type="password"
+                                id="current-password"
+                                name="currentPassword"
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-colors"
+                                placeholder="Enter current password"
+                            />
+                        </div>
+                        <div>
+                            <label for="new-password" class="block text-sm font-medium text-gray-700 mb-2">
+                                New Password
+                            </label>
+                            <input
+                                type="password"
+                                id="new-password"
+                                name="newPassword"
+                                required
+                                minlength="6"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-colors"
+                                placeholder="Enter new password"
+                            />
+                        </div>
+                        <div>
+                            <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-2">
+                                Confirm New Password
+                            </label>
+                            <input
+                                type="password"
+                                id="confirm-password"
+                                name="confirmPassword"
+                                required
+                                minlength="6"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-colors"
+                                placeholder="Confirm new password"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            class="w-full bg-brand-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-700 focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 transition-colors"
+                        >
+                            Change Password
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Account Actions -->
+                <div class="bg-red-50/50 rounded-xl p-6 border border-red-200">
+                    <h3 class="text-lg font-semibold text-red-900 mb-4 flex items-center gap-2">
+                        <span class="text-red-600">⚠️</span>
+                        Danger Zone
+                    </h3>
+                    <p class="text-red-700 mb-4">
+                        These actions are permanent and cannot be undone.
+                    </p>
+                    <button
+                        onclick="confirmDeleteAccount()"
+                        class="bg-red-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-600 focus:ring-offset-2 transition-colors"
+                    >
+                        Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background decoration -->
+    <div class="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]" aria-hidden="true">
+        <div class="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-brand-400 to-brand-600 opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"></div>
+    </div>
+</div>
+
+<script>
+    function confirmDeleteAccount() {
+        const confirmed = confirm(
+            'Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.'
+        );
+        
+        if (confirmed) {
+            const doubleConfirm = confirm(
+                'This is your final warning. Deleting your account will remove all your waypoints, paths, and account data permanently. Are you absolutely sure?'
+            );
+            
+            if (doubleConfirm) {
+                // Create and submit delete form
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/delete-account';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    }
+
+    // Password confirmation validation
+    document.getElementById('confirm-password').addEventListener('input', function() {
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = this.value;
+        
+        if (newPassword !== confirmPassword) {
+            this.setCustomValidity('Passwords do not match');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+</script>
+
 <%- include('partials/footer') %>
