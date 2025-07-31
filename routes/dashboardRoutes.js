@@ -24,9 +24,10 @@ module.exports = router;
 
     // GET all waypoints
     router.get('/waypoints', isAuthenticated, (req, res) => {
-        const sql = 'SELECT id, lat, lng, userId, username FROM waypoints ORDER BY createdAt ASC';
+        const sql = 'SELECT id, lat, lng, userId, createdAt FROM waypoints ORDER BY createdAt ASC';
         db.all(sql, [], (err, rows) => {
             if (err) {
+                console.error('Error fetching waypoints:', err);
                 return res.status(500).json({ error: 'Failed to fetch waypoints' });
             }
             res.json(rows);
@@ -36,19 +37,20 @@ module.exports = router;
     // POST a new waypoint
     router.post('/waypoints', isAuthenticated, (req, res) => {
         const { lat, lng } = req.body;
-        const { userId, username } = req.session;
+        const { userId } = req.session;
 
         if (!lat || !lng) {
             return res.status(400).json({ error: 'Latitude and longitude are required.' });
         }
 
-        const sql = `INSERT INTO waypoints (lat, lng, userId, username) VALUES (?, ?, ?, ?)`;
-        db.run(sql, [lat, lng, userId, username], function (err) {
+        const sql = `INSERT INTO waypoints (lat, lng, userId) VALUES (?, ?, ?)`;
+        db.run(sql, [lat, lng, userId], function (err) {
             if (err) {
+                console.error('Error saving waypoint:', err);
                 return res.status(500).json({ error: 'Failed to save waypoint.' });
             }
 
-            const newWaypoint = { id: this.lastID, lat, lng, userId, username };
+            const newWaypoint = { id: this.lastID, lat, lng, userId };
             
             res.status(201).json(newWaypoint);
         });
@@ -56,9 +58,10 @@ module.exports = router;
 
     // GET all paths
     router.get('/paths', isAuthenticated, (req, res) => {
-        const sql = 'SELECT id, userId, username, pathData FROM paths ORDER BY createdAt ASC';
+        const sql = 'SELECT id, userId, pathData, createdAt FROM paths ORDER BY createdAt ASC';
         db.all(sql, [], (err, rows) => {
             if (err) {
+                console.error('Error fetching paths:', err);
                 return res.status(500).json({ error: 'Failed to fetch paths' });
             }
             const paths = rows.map(row => ({
@@ -75,10 +78,10 @@ module.exports = router;
         console.log('Request body:', req.body);
         
         const { path } = req.body; // Expect an array of {lat, lng}
-        const { userId, username } = req.session;
+        const { userId } = req.session;
         
         console.log('Extracted path:', path);
-        console.log('User info - ID:', userId, 'Username:', username);
+        console.log('User info - ID:', userId);
 
         if (!path || !Array.isArray(path) || path.length < 2) {
             console.error('Invalid path data:', { path, isArray: Array.isArray(path), length: path?.length });
@@ -88,17 +91,17 @@ module.exports = router;
         const pathDataJson = JSON.stringify(path);
         console.log('Path data JSON:', pathDataJson);
         
-        const sql = `INSERT INTO paths (userId, username, pathData) VALUES (?, ?, ?)`;
+        const sql = `INSERT INTO paths (userId, pathData) VALUES (?, ?)`;
         console.log('Executing SQL:', sql);
-        console.log('SQL parameters:', [userId, username, pathDataJson]);
+        console.log('SQL parameters:', [userId, pathDataJson]);
 
-        db.run(sql, [userId, username, pathDataJson], function (err) {
+        db.run(sql, [userId, pathDataJson], function (err) {
             if (err) {
                 console.error('Database error when saving path:', err);
                 return res.status(500).json({ error: 'Failed to save path.' });
             }
             
-            const newPath = { id: this.lastID, userId, username, path };
+            const newPath = { id: this.lastID, userId, path };
             console.log('Path saved to database successfully:', newPath);
             
             res.status(201).json(newPath);

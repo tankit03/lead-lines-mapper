@@ -4,6 +4,8 @@ node_modules/
 # database ignored
 /database/
 
+/public/css/output
+
 # npm logs
 npm-debug.log*
 
