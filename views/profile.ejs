@@ -117,10 +117,45 @@
 
             <!-- Delete Account Section -->
             <div class="px-6 py-6 bg-red-50 border-t border-red-200">
-                <button onclick="confirmDeleteAccount()" class="control-btn danger">
-                    🗑️ Delete User
-                </button>
-                <p class="text-sm text-red-600 mt-2">This action is permanent and cannot be undone.</p>
+                                <div class="space-y-4">
+                    <!-- Map Data Management Buttons -->
+                    <div class="pb-4 border-b border-red-300">
+                        <h3 class="text-lg font-medium text-red-800 mb-3">Map Data Management</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <!-- Delete Waypoints Button -->
+                            <div class="text-center">
+                                <button onclick="confirmDeleteWaypoints()" class="control-btn danger w-full">
+                                    📍 Delete All Waypoints
+                                </button>
+                                <p class="text-xs text-red-600 mt-1">Remove all markers</p>
+                            </div>
+                            
+                            <!-- Delete Paths Button -->
+                            <div class="text-center">
+                                <button onclick="confirmDeletePaths()" class="control-btn danger w-full">
+                                    🛤️ Delete All Paths
+                                </button>
+                                <p class="text-xs text-red-600 mt-1">Remove all drawn paths</p>
+                            </div>
+                            
+                            <!-- Clear All Button -->
+                            <div class="text-center">
+                                <button onclick="confirmClearAll()" class="control-btn danger w-full">
+                                    🗑️ Clear All Data
+                                </button>
+                                <p class="text-xs text-red-600 mt-1">Remove everything</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delete Account Button -->
+                    <div>
+                        <h3 class="text-lg font-medium text-red-800 mb-3">Account Management</h3>
+                        <button onclick="confirmDeleteAccount()" class="control-btn danger">
+                            🗑️ Delete User Account
+                        </button>
+                        <p class="text-sm text-red-600 mt-2">This action is permanent and cannot be undone.</p>
+                    </div>
             </div>
         </div>
     </div>

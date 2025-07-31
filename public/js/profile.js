@@ -257,6 +257,152 @@ async function deleteAccount() {
     }
 }
 
+
+
+// Delete Waypoints Only
+function confirmDeleteWaypoints() {
+    const confirmed = confirm(
+        'Are you sure you want to delete all your waypoints? This will remove all markers from the map.'
+    );
+    
+    if (confirmed) {
+        deleteWaypoints();
+    }
+}
+
+async function deleteWaypoints() {
+    const deleteBtn = document.querySelector('button[onclick="confirmDeleteWaypoints()"]');
+    
+    // Disable button during request
+    const originalText = deleteBtn.textContent;
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = '📍 Deleting...';
+
+    try {
+        const response = await fetch('/waypoints', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Success
+            showMessage(`${data.deletedCount} waypoints deleted successfully!`, false);
+        } else {
+            // Error
+            showMessage(data.error || 'Failed to delete waypoints.', true);
+        }
+    } catch (error) {
+        console.error('Error deleting waypoints:', error);
+        showMessage('An unexpected error occurred while deleting waypoints.', true);
+    } finally {
+        // Re-enable button
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = originalText;
+    }
+}
+
+// Delete Paths Only
+function confirmDeletePaths() {
+    const confirmed = confirm(
+        'Are you sure you want to delete all your paths? This will remove all drawn paths from the map.'
+    );
+    
+    if (confirmed) {
+        deletePaths();
+    }
+}
+
+async function deletePaths() {
+    const deleteBtn = document.querySelector('button[onclick="confirmDeletePaths()"]');
+    
+    // Disable button during request
+    const originalText = deleteBtn.textContent;
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = '🛤️ Deleting...';
+
+    try {
+        const response = await fetch('/paths', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Success
+            showMessage(`${data.deletedCount} paths deleted successfully!`, false);
+        } else {
+            // Error
+            showMessage(data.error || 'Failed to delete paths.', true);
+        }
+    } catch (error) {
+        console.error('Error deleting paths:', error);
+        showMessage('An unexpected error occurred while deleting paths.', true);
+    } finally {
+        // Re-enable button
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = originalText;
+    }
+}
+
+// Clear All Data (Waypoints + Paths)
+function confirmClearAll() {
+    const confirmed = confirm(
+        'Are you sure you want to clear ALL your map data? This will delete both waypoints and paths.'
+    );
+    
+    if (confirmed) {
+        const doubleConfirm = confirm(
+            'This action cannot be undone. All your waypoints and paths will be permanently deleted. Continue?'
+        );
+        
+        if (doubleConfirm) {
+            clearAllData();
+        }
+    }
+}
+
+async function clearAllData() {
+    const clearBtn = document.querySelector('button[onclick="confirmClearAll()"]');
+    
+    // Disable button during request
+    const originalText = clearBtn.textContent;
+    clearBtn.disabled = true;
+    clearBtn.textContent = '🗑️ Clearing...';
+
+    try {
+        const response = await fetch('/clear-all', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Success
+            showMessage(`All data cleared! Deleted ${data.deletedWaypoints} waypoints and ${data.deletedPaths} paths.`, false);
+        } else {
+            // Error
+            showMessage(data.error || 'Failed to clear all data.', true);
+        }
+    } catch (error) {
+        console.error('Error clearing all data:', error);
+        showMessage('An unexpected error occurred while clearing data.', true);
+    } finally {
+        // Re-enable button
+        clearBtn.disabled = false;
+        clearBtn.textContent = originalText;
+    }
+}
+
 // Password confirmation validation
 document.getElementById('confirm-password').addEventListener('input', function() {
     const newPassword = document.getElementById('new-password').value;
