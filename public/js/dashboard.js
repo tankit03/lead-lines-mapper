@@ -17,8 +17,7 @@ class MapDashboard {
 
     async initMap() {
         console.log('MapDashboard.initMap() called');
-        console.log('Starting map initialization...');
-        
+        console.log('Starting map initialization...');        
         
         // Map Initialization
         const { Map } = await google.maps.importLibrary("maps");
@@ -129,10 +128,11 @@ class MapDashboard {
     }
     // Controls and Listeners 
     initializeControls() {
-        console.log('Initializing controls...');
+
         const addMarkerBtn = document.getElementById('add-marker-btn');
         const drawPathBtn = document.getElementById('draw-path-btn');
         const clearBtn = document.getElementById('clear-map-btn');
+        const deleteWaypointBtn = document.getElementById('delete-waypoint-btn');
 
         if (!addMarkerBtn || !drawPathBtn || !clearBtn) {
             console.error('One or more control buttons not found!');
@@ -146,6 +146,7 @@ class MapDashboard {
             console.log('Add marker button clicked, current mode:', this.currentMode);
             
             if (this.currentMode === 'addingMarker') {
+                console.log("this is adding Marker", this.currentMode);
                 // Stop adding markers
                 console.log('Stopping marker adding mode');
                 addMarkerBtn.textContent = '📍 Add Marker';
@@ -154,22 +155,24 @@ class MapDashboard {
             } else {
 
                 // makes sure mode is set to 
-                console.log('Starting marker adding mode');
+                console.log("this is outside marker", this.currentMode);
                 
                 // Reset draw path button
                 drawPathBtn.textContent = '🛤️ Draw Path';
                 drawPathBtn.classList.remove('active');
+                deleteWaypointBtn.textContent = '🗑️ Delete Waypoint';
+                deleteWaypointBtn.classList.remove('active');
                 
                 // If there's a current polyline being drawn, clean it up
                 if (this.currentPolyline) {
                     this.currentPolyline.setMap(null);
                     this.currentPolyline = null;
                 }
+                this.resetMarkerStyles();
 
                 addMarkerBtn.textContent = '📍 Stop Adding Markers';
                 addMarkerBtn.classList.add('active'); 
                 this.setMode('addingMarker');
-
             }
         });
                 
@@ -177,12 +180,52 @@ class MapDashboard {
         clearBtn.addEventListener('click', async () => {
             console.log('Clear button clicked');
 
+            // Reset all buttons to default state
             addMarkerBtn.textContent = '📍 Add Marker';
             addMarkerBtn.classList.remove('active');
             drawPathBtn.textContent = '🛤️ Draw Path';
-            drawPathBtn.classList.remove('active')
+            drawPathBtn.classList.remove('active');
+            deleteWaypointBtn.textContent = '🗑️ Delete Waypoint';
+            deleteWaypointBtn.classList.remove('active');
+            
+            // Reset any active states
+            this.resetMarkerStyles();
+            if (this.currentPolyline) {
+                this.currentPolyline.setMap(null);
+                this.currentPolyline = null;
+            }
 
             await this.clearOverlays();
+        });
+
+        deleteWaypointBtn.addEventListener('click', () => {
+            console.log('Delete waypoint button clicked, current mode:', this.currentMode);
+            
+            if (this.currentMode === 'deletingWaypoint') {
+                deleteWaypointBtn.textContent = '🗑️ Delete Items';
+                deleteWaypointBtn.classList.remove('active');
+                this.setMode('none');
+                this.resetMarkerStyles();
+                this.resetPathStyles(); 
+            } else {
+                // Reset other buttons
+                addMarkerBtn.textContent = '📍 Add Marker';
+                addMarkerBtn.classList.remove('active');
+                drawPathBtn.textContent = '🛤️ Draw Path';
+                drawPathBtn.classList.remove('active');
+                
+                // Reset any drawing state
+                if (this.currentPolyline) {
+                    this.currentPolyline.setMap(null);
+                    this.currentPolyline = null;
+                }
+                
+                deleteWaypointBtn.textContent = '🗑️ Stop Deleting';
+                deleteWaypointBtn.classList.add('active');
+                this.setMode('deletingWaypoint');
+                this.highlightDeletableMarkers();
+                this.highlightDeletablePaths();
+            }
         });
 
         drawPathBtn.addEventListener('click', () => {
@@ -208,6 +251,10 @@ class MapDashboard {
                 // Reset add marker button
                 addMarkerBtn.textContent = '📍 Add Marker';
                 addMarkerBtn.classList.remove('active');
+                deleteWaypointBtn.textContent = '🗑️ Delete Items';
+                deleteWaypointBtn.classList.remove('active');
+
+                this.resetMarkerStyles();
 
                 // Activate draw path button
                 drawPathBtn.textContent = '🛤️ Stop Drawing Path';
@@ -219,7 +266,6 @@ class MapDashboard {
     }
 
     initializeMapListener() {
-        console.log('Initializing map listener...');
         this.map.addListener('click', (event) => {
             console.log('Map clicked, current mode:', this.currentMode);
             if (this.currentMode === 'addingMarker') {
@@ -231,44 +277,50 @@ class MapDashboard {
                 this.addPathPoint(event.latLng);
             } 
         });
-        console.log('Map listener initialized');
+        console.log('initialized Map listener');
     }
 
     setMode(mode) {
         console.log('Setting mode to:', mode);
         this.currentMode = mode;
         const clearBtn = document.getElementById("clear-map-btn");
-        if (!clearBtn) {
-            console.warn('Clear button not found');
+        const deleteWaypointBtn = document.getElementById("delete-waypoint-btn");
+
+
+        if (!clearBtn || !deleteWaypointBtn) {
+            console.warn('Control buttons not found');
             return;
         }
-
     
         if (mode === 'addingMarker') {
             
             this.map.setOptions({ draggableCursor: 'crosshair' });
-            console.log("this is the clear btn", clearBtn);
             clearBtn.style.display = "none";
+            deleteWaypointBtn.style.display = "none";
             console.log('Cursor set to crosshair for adding marker');
 
         } else if (mode === 'drawingPath') {
             
             this.map.setOptions({ draggableCursor: 'crosshair' });
-            clearBtn.style.display = "none";            
+            clearBtn.style.display = "none";         
+            deleteWaypointBtn.style.display = "none";   
             console.log('Cursor set to crosshair for drawing path');
 
+        } else if (mode === 'deletingWaypoint') {
+            this.map.setOptions({ draggableCursor: 'pointer' });
+            clearBtn.style.display = "none";
+            deleteWaypointBtn.style.display = "block";
+            console.log('Cursor set to pointer for deleting waypoints');
         } else {
-
             this.map.setOptions({ draggableCursor: 'default' });
-            clearBtn.style.display = "block"; 
-            clearBtn.disabled = false;
+            clearBtn.style.display = "block";
+            deleteWaypointBtn.style.display = "block";
             console.log('Cursor reset to default grab');
         }
         console.log('Mode set to:', this.currentMode);
     }
 
     async initializeSearch() {
-        console.log('Initializing search...');
         
         // Import the places library
         const { SearchBox } = await google.maps.importLibrary("places");
@@ -304,10 +356,8 @@ class MapDashboard {
                 this.map.setCenter(place.geometry.location);
                 this.map.setZoom(17);
             }
-            
             console.log('Map centered on:', place.name);
         });
-        
         console.log('Search initialized');
     }
  
@@ -324,7 +374,7 @@ class MapDashboard {
         // Convert both to numbers for comparison
         const isCurrentUser = Number(waypoint.userId) === Number(this.userId);
 
-        console.log("current user", isCurrentUser);
+        // console.log("current user", isCurrentUser);
 
         const marker = new google.maps.Marker({
             position: { lat: waypoint.lat, lng: waypoint.lng },
@@ -336,7 +386,18 @@ class MapDashboard {
                 url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
             }
         });
+
         marker.userId = waypoint.userId;
+        marker.waypointId = waypoint.id;
+
+        if (isCurrentUser) {
+            marker.addListener('click', () => {
+                if (this.currentMode === 'deletingWaypoint') {
+                this.deleteWaypoint(marker);
+                }
+            });
+        }
+
         this.userMarkers.push(marker);
     }
     
@@ -407,7 +468,17 @@ class MapDashboard {
         });
 
         polyline.userId = pathData.userId;
+        polyline.pathId = pathData.id;
+
         this.userPolylines.push(polyline);
+
+        if(isCurrentUser){
+            polyline.addListener('click', () => {
+                if(this.currentMode == 'deletingWaypoint'){
+                    this.deletePath(polyline);
+                }
+            });
+        }
     }
 
     // NEW: Gathers coordinates from the currently drawn path and POSTs them
@@ -449,7 +520,11 @@ class MapDashboard {
             console.log('Path saved successfully:', result);
             
             // Clear the current polyline after saving
+            this.currentPolyline.setMap(null);
             this.currentPolyline = null;
+
+            this.pathMarkers.forEach(marker => marker.setMap(null));
+            this.pathMarkers = [];
             
             // Load new data to show the new path
             await this.loadNewData();
@@ -461,6 +536,87 @@ class MapDashboard {
     }
     
     // --- Clearing Logic ---
+    highlightDeletableMarkers() {
+        this.userMarkers.forEach(marker => {
+            if (Number(marker.userId) === Number(this.userId)) {
+                // Make user's markers more prominent and add hover effects
+                marker.setIcon({
+                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                    scaledSize: new google.maps.Size(40, 40)
+                });
+                
+                // Add hover effects
+                marker.addListener('mouseover', () => {
+                    marker.setIcon({
+                        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                        scaledSize: new google.maps.Size(45, 45)
+                    });
+                });
+                
+                marker.addListener('mouseout', () => {
+                    marker.setIcon({
+                        url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                        scaledSize: new google.maps.Size(40, 40)
+                    });
+                });
+            }
+        });
+    }
+
+    highlightDeletablePaths() {
+        this.userPolylines.forEach(polyline => {
+            if (Number(polyline.userId) === Number(this.userId)) {
+                // Make user's paths more prominent
+                polyline.setOptions({
+                    strokeWeight: 5,
+                    strokeOpacity: 1.0
+                });
+                
+                // Add hover effects
+                polyline.addListener('mouseover', () => {
+                    polyline.setOptions({
+                        strokeColor: '#ff0000',
+                        strokeWeight: 6
+                    });
+                });
+                
+                polyline.addListener('mouseout', () => {
+                    polyline.setOptions({
+                        strokeColor: '#4285F4',
+                        strokeWeight: 5
+                    });
+                });
+            }
+        });
+    }
+
+    resetPathStyles() {
+        this.userPolylines.forEach(polyline => {
+            if (Number(polyline.userId) === Number(this.userId)) {
+                polyline.setOptions({
+                    strokeColor: '#4285F4',
+                    strokeWeight: 3,
+                    strokeOpacity: 0.8
+                });
+                // Remove hover listeners
+                google.maps.event.clearListeners(polyline, 'mouseover');
+                google.maps.event.clearListeners(polyline, 'mouseout');
+            }
+        });
+    }
+
+    resetMarkerStyles() {
+        this.userMarkers.forEach(marker => {
+            if (Number(marker.userId) === Number(this.userId)) {
+                marker.setIcon({
+                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                });
+                // Remove hover listeners
+                google.maps.event.clearListeners(marker, 'mouseover');
+                google.maps.event.clearListeners(marker, 'mouseout');
+            }
+        });
+    }
 
     clearMapOverlays() {
         // Filter and remove only current user's markers
@@ -517,7 +673,7 @@ class MapDashboard {
             console.log('Database cleared successfully:', result);
             
             // Clear all overlays from the map
-            clearMapOverlays()
+            this.clearMapOverlays()
             
             // Clear current polyline from the map
             if (this.currentPolyline) {
@@ -540,6 +696,63 @@ class MapDashboard {
             console.error('Failed to clear data:', error);
             // Still clear the map display even if the database operation failed
             this.clearMapOverlays();
+        }
+    }
+
+
+    async deletePath(polyline) {
+        console.log('Deleting path:', polyline.pathId);
+        
+        try {
+            const response = await fetch(`/paths/${polyline.pathId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Path deleted successfully:', result);
+            
+            // Remove polyline from map
+            polyline.setMap(null);
+            
+            // Remove from arrays
+            this.userPolylines = this.userPolylines.filter(p => p !== polyline);
+            this.existingPathIds.delete(polyline.pathId);
+            
+        } catch (error) {
+            console.error('Failed to delete path:', error);
+        }
+    }
+
+    async deleteWaypoint(marker) {
+        console.log('Deleting waypoint:', marker.waypointId);
+        
+        try {
+            const response = await fetch(`/waypoints/${marker.waypointId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Waypoint deleted successfully:', result);
+            
+            // Remove marker from map
+            marker.setMap(null);
+            
+            // Remove from arrays
+            this.userMarkers = this.userMarkers.filter(m => m !== marker);
+            this.existingWaypointIds.delete(marker.waypointId);
+            
+        } catch (error) {
+            console.error('Failed to delete waypoint:', error);
         }
     }
 }

@@ -107,7 +107,51 @@ module.exports = router;
     
     // DELETE waypoint (remains the same)
     router.delete('/waypoints/:id', isAuthenticated, (req, res) => {
-       // ... existing delete logic ...
+        const waypointId = req.params.id;
+        const { userId } = req.session;
+
+        const sql = 'DELETE FROM waypoints WHERE id = ? AND userId = ?';
+        db.run(sql, [waypointId, userId], function (err) {
+            if (err) {
+                console.error('Error deleting waypoint:', err);
+                return res.status(500).json({ error: 'Failed to delete waypoint' });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Waypoint not found or not authorized' });
+            }
+            
+            console.log(`Deleted waypoint ${waypointId} for user ${userId}`);
+            res.json({ 
+                message: 'Waypoint deleted successfully',
+                waypointId: waypointId
+            });
+        });
+    });
+
+
+    // delete path
+    router.delete('/paths/:id', isAuthenticated, (req, res) => {
+        const pathId = req.params.id;
+        const { userId } = req.session;
+
+        const sql = 'DELETE FROM paths WHERE id = ? AND userId = ?';
+        db.run(sql, [pathId, userId], function (err) {
+            if (err) {
+                console.error('Error deleting path:', err);
+                return res.status(500).json({ error: 'Failed to delete path' });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'path not found or not authorized' });
+            }
+            
+            console.log(`Deleted path ${pathId} for user ${userId}`);
+            res.json({ 
+                message: 'path deleted successfully',
+                pathId: pathId
+            });
+        });
     });
 
     // DELETE all waypoints for current user
