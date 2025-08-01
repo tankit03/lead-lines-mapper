@@ -3,8 +3,11 @@ const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const dotenv = require('dotenv');
+
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const profileRoutes = require('./routes/profileRoutes'); // Add this line
+
 const http = require('http');
 
 dotenv.config();
@@ -48,6 +51,7 @@ app.use((req, res, next) => {
 
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes); 
+app.use('/', profileRoutes);
 
 // server start
 server.listen(PORT, () => {

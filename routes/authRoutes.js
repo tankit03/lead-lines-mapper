@@ -8,27 +8,27 @@ const saltRounds = 10;
 // Middleware to check if user is authenticated 
 const isAuthenticated = (req, res, next) => {
     if (req.session.userId) {
-        // If there is a userId in the session, the user is authenticated
-        return next();
+        // return to dashboard if the user is logged in already.
+        return res.redirect('/dashboard');
     }
-    res.redirect('/login');
+    next();
 };
 
 // registration route
 
-router.get('/register', (req, res) => {
+router.get('/register',isAuthenticated, (req, res) => {
     res.render('register', { title: 'Register', error: null });
 });
 
 // login routes
 
-router.get('/login', (req, res) => {
+router.get('/login',isAuthenticated, (req, res) => {
     res.render('login', { title: 'Login', error: null });
 });
 
 
 // post register routes
-router.post('/register', async (req, res) => {
+router.post('/register',isAuthenticated, async (req, res) => {
     const { email, username, password } = req.body;
 
     // Basic validation
@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /login - Handle login logic
-router.post('/login', (req, res) => {
+router.post('/login',isAuthenticated, (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -90,16 +90,6 @@ router.post('/login', (req, res) => {
             res.render('login', { title: 'Login', error: 'Invalid email or password.' });
         }
     });
-});
-
-// profile page
-router.get('/profile', isAuthenticated, (req, res) => {
-
-    res.render('profile', {
-        title: 'Dashboard',
-        username: req.session.username
-    });
-
 });
 
 // logout route

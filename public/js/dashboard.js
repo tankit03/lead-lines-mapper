@@ -134,11 +134,11 @@ class MapDashboard {
         const clearBtn = document.getElementById('clear-map-btn');
         const deleteWaypointBtn = document.getElementById('delete-waypoint-btn');
 
-        if (!addMarkerBtn || !drawPathBtn || !clearBtn) {
+        if (!addMarkerBtn || !drawPathBtn || !deleteWaypointBtn) {
             console.error('One or more control buttons not found!');
             console.log('addMarkerBtn:', addMarkerBtn);
             console.log('drawPathBtn:', drawPathBtn);
-            console.log('clearBtn:', clearBtn);
+            console.log('deleteWaypointBtn:', cleardeleteWaypointBtnBtn);
             return;
         }
 
@@ -176,27 +176,6 @@ class MapDashboard {
             }
         });
                 
-        // Clear button - now clears both map and database
-        clearBtn.addEventListener('click', async () => {
-            console.log('Clear button clicked');
-
-            // Reset all buttons to default state
-            addMarkerBtn.textContent = '📍 Add Marker';
-            addMarkerBtn.classList.remove('active');
-            drawPathBtn.textContent = '🛤️ Draw Path';
-            drawPathBtn.classList.remove('active');
-            deleteWaypointBtn.textContent = '🗑️ Delete Waypoint';
-            deleteWaypointBtn.classList.remove('active');
-            
-            // Reset any active states
-            this.resetMarkerStyles();
-            if (this.currentPolyline) {
-                this.currentPolyline.setMap(null);
-                this.currentPolyline = null;
-            }
-
-            await this.clearOverlays();
-        });
 
         deleteWaypointBtn.addEventListener('click', () => {
             console.log('Delete waypoint button clicked, current mode:', this.currentMode);
